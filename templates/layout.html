@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Finance Tracker{% endblock %}</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- Main Stylesheet -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-container">
+            <a href="{{ url_for('dashboard') }}" class="logo">Finance Tracker</a>
+            {% if current_user %}
+            <nav>
+                <a href="{{ url_for('dashboard') }}">Dashboard</a>
+                <a href="{{ url_for('expenses_list') }}">Expenses</a>
+                <a href="{{ url_for('investments') }}">Investments</a>
+                <a href="{{ url_for('assetdebt') }}">Assets & Debts</a>
+                <a href="{{ url_for('reports') }}">Reports</a>
+            </nav>
+            <div class="header-actions">
+                <a href="{{ url_for('chatbot_page') }}" class="btn btn-secondary">Chatbot</a>
+                <a href="{{ url_for('dashboard') }}" class="profile-icon">
+                    <img src="https://i.ibb.co/7bQzY2L/profile-placeholder.png" alt="Profile">
+                </a>
+                <a href="{{ url_for('logout') }}">Logout</a>
+            </div>
+            {% endif %}
+        </div>
+    </header>
+    
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+
+</body>
+</html>

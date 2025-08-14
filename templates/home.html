@@ -1,0 +1,113 @@
+{% extends "layout.html" %}
+{% block content %}
+
+<!-- Hero Section with Local Background Image -->
+<section class="image-hero">
+  <div class="hero-content-inner">
+    <h1>Take Control of Your Finances</h1>
+    <p>Finance Tracker is your all-in-one solution for managing your money. Track expenses, plan budgets, and generate insightful reports to achieve your financial goals.</p>
+    <a href="{{ url_for('signup') }}" class="btn btn-primary">Get Started</a>
+  </div>
+</section>
+
+<!-- Features Section in a Card -->
+<div class="content-card">
+  <section class="features">
+    <h2>Why Choose Finance Tracker?</h2>
+    <p class="subtitle">Everything you need to manage, track, and grow your finances — all in one place.</p>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="icon-circle yellow"><span>⏱️</span></div>
+        <h3>Real-Time Expense Tracking</h3>
+        <p>Log daily spending and monitor categories instantly with visual breakdowns.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon-circle yellow"><span>📊</span></div>
+        <h3>Smart Budget Planning</h3>
+        <p>Set spending limits, compare planned vs. actual expenses, and stay on track financially.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon-circle yellow"><span>📈</span></div>
+        <h3>Insightful Financial Reports</h3>
+        <p>Generate monthly charts, summaries, and income-to-expense ratios in a click.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Reports & Charts Section in a Card -->
+<div class="content-card">
+  <section class="reports-section">
+    <h2>Financial Reports & Visual Insights</h2>
+    <p class="subtitle">Gain clarity on your spending patterns and savings with smart charts and breakdowns.</p>
+
+    <div class="chart-grid">
+      <div class="chart-card-inner">
+        <h3>Expenses by Category</h3>
+        <div class="chart-container">
+          <canvas id="pieChart"></canvas>
+        </div>
+      </div>
+      <div class="chart-card-inner">
+        <h3>Monthly Spending</h3>
+        <div class="chart-container">
+          <canvas id="barChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-card-inner wide">
+      <h3>Income vs Expenses Over Time</h3>
+      <div class="chart-container-wide">
+        <canvas id="lineChart"></canvas>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Chart.js library and initialization script -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Pie Chart
+    new Chart(document.getElementById("pieChart"), {
+        type: "pie",
+        data: {
+            labels: ["Groceries", "Bills", "Transport", "Shopping", "Entertainment"],
+            datasets: [{
+                data: [350, 450, 120, 250, 180],
+                backgroundColor: ["#ffc107", "#ff9f40", "#4bc0c0", "#36a2eb", "#ff6384"],
+                hoverOffset: 4
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } }
+    });
+
+    // Bar Chart
+    new Chart(document.getElementById("barChart"), {
+        type: "bar",
+        data: {
+            labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+            datasets: [{
+                label: "Expenses",
+                data: [1200, 900, 1500, 1000, 1300, 1100],
+                backgroundColor: "#ffc107", borderRadius: 4
+            }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+    });
+
+    // Line Chart
+    new Chart(document.getElementById("lineChart"), {
+        type: "line",
+        data: {
+            labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
+            datasets: [
+                { label: "Income", data: [2000, 2200, 2100, 2300, 2500, 2400], borderColor: "#4bc0c0", backgroundColor: "rgba(75, 192, 192, 0.2)", fill: true, tension: 0.3 },
+                { label: "Expenses", data: [1200, 900, 1500, 1000, 1300, 1100], borderColor: "#ff6384", backgroundColor: "rgba(255, 99, 132, 0.2)", fill: true, tension: 0.3 }
+            ]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } }, scales: { y: { beginAtZero: true } } }
+    });
+});
+</script>
+{% endblock %}

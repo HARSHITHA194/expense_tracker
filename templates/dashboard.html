@@ -1,0 +1,161 @@
+{% extends "layout.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+    
+    <!-- Profile & Welcome Section -->
+    <div class="content-card profile-header-card">
+        <form action="{{ url_for('upload_profile_picture') }}" method="post" enctype="multipart/form-data" id="profile-pic-form">
+            <label for="profile_pic_input" class="profile-avatar-wrapper">
+                <img src="{{ url_for('static', filename=current_user.profile_picture_url or 'default_avatar.png') }}" alt="User Profile" class="profile-avatar">
+                <div class="avatar-overlay"><span>Change</span></div>
+            </label>
+            <input type="file" name="profile_pic" id="profile_pic_input" style="display: none;" onchange="document.getElementById('profile-pic-form').submit();">
+        </form>
+        <div class="profile-welcome-text">
+            <h1>Welcome, {{ current_user.full_name.split()[0] }}!</h1>
+            <p style="text-align: left;">Here's your financial snapshot for today.</p>
+        </div>
+    </div>
+    
+    <!-- Main Dashboard Grid -->
+    <div class="dashboard-main-grid">
+        <!-- Left Column -->
+        <div class="dashboard-column">
+            <!-- Quick Actions -->
+            <div class="content-card">
+                <h2>🛠️ Quick Actions</h2>
+                <div class="quick-actions-grid">
+                    <a href="{{ url_for('expense') }}" class="action-btn">Add Expense/Income</a>
+                    <a href="{{ url_for('budget') }}" class="action-btn">Set Budgets</a>
+                    <a href="{{ url_for('reports') }}" class="action-btn">View Reports ↗</a>
+                </div>
+            </div>
+
+            <!-- Financial Goals -->
+            <div class="content-card">
+                <h2>🎯 Financial Goals</h2>
+                <div class="goals-list">
+                    {% for goal in goals %}
+                    <div class="goal-item">
+                        <span>{{ goal.goal_name }} ({{ goal.goal_type }})  {{ current_user.currency }}  {{ "%.2f"|format(goal.target_amount) }}</span>
+                        <form action="{{ url_for('delete_goal', goal_id=goal.id) }}" method="post" style="display:inline;">
+                            <button type="submit" class="btn-delete-small">✕</button>
+                        </form>
+                    </div>
+                    {% else %}
+                    <p style="text-align: center; font-size: 0.9rem;">No goals set yet.</p>
+                    {% endfor %}
+                </div>
+                <form action="{{ url_for('add_goal') }}" method="post" class="add-goal-form">
+                    <input type="text" name="goal_name" placeholder="New Goal Name" required>
+                    <input type="number" name="target_amount" placeholder="Amount" required>
+                    <select name="goal_type">
+                        <option value="monthly_saving">Monthly</option>
+                        <option value="yearly_saving">Yearly</option>
+                        <option value="5_year_saving">5-Year</option>
+                    </select>
+                    <button type="submit" class="btn btn-primary" style="padding: 8px 15px;">Add</button>
+                </form>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="content-card">
+                <h2>📋 Recent Activity</h2>
+                <div class="activity-list">
+                    {% for expense in recent_expenses_list %}
+                    <div class="activity-item">
+                        <div class="activity-icon expense">↓</div>
+                        <div class="activity-details">
+                            <strong>{{ expense.title }}</strong>
+                            <span>{{ expense.category }}</span>
+                        </div>
+                        <div class="activity-amount expense">{{ current_user.currency }}   {{ "%.2f"|format(expense.amount) }}</div>
+                    </div>
+                    {% else %}
+                    <p style="text-align: center; font-size: 0.9rem;">No recent transactions.</p>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column -->
+        <div class="dashboard-column">
+            <!-- Summary Cards -->
+            <div class="summary-cards-grid">
+                <div class="summary-card"><h3>Total Income</h3><p class="stat income">{{ current_user.currency }}  {{ "%.2f"|format(monthly_income) }}</p></div>
+                <div class="summary-card"><h3>Total Expenses</h3><p class="stat expense">{{ current_user.currency }}  {{ "%.2f"|format(total_spent_this_month) }}</p></div>
+                <div class="summary-card"><h3>Net Balance</h3><p class="stat {% if net_balance >= 0 %}income{% else %}expense{% endif %}">{{ current_user.currency }}  {{ "%.2f"|format(net_balance) }}</p></div>
+                <div class="summary-card"><h3>Budget Used</h3><p class="stat">{{ "%.0f"|format(budget_used_percent) }}%</p></div>
+            </div>
+
+            <!-- Quick Charts -->
+            <div class="content-card">
+                <h2>📈 Quick Charts</h2>
+                <div class="quick-charts-grid">
+                    <div>
+                        <h4>Weekly Expenses</h4>
+                        <div class="chart-container-small"><canvas id="weeklyExpenseChart"></canvas></div>
+                    </div>
+                    <div>
+                        <h4>Spending by Category</h4>
+                        <div class="chart-container-small"><canvas id="categoryPieChart"></canvas></div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Upcoming Alerts -->
+            <div class="content-card">
+                <h2>📅 Upcoming & Alerts</h2>
+                <div class="alerts-list">
+                    {% if overspent_categories %}
+                        {% for cat in overspent_categories %}
+                        <div class="alert-item warning">
+                            <strong>Over Budget!</strong> You've overspent in the '{{ cat }}' category.
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                         <div class="alert-item">
+                            <strong>All Good!</strong> You are within your budget limits this month.
+                        </div>
+                    {% endif %}
+                    <div class="alert-item info">
+                        <strong>Reminder:</strong> Review your full monthly report for more insights.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<!-- Data Islands for Charts -->
+<script id="weekly-data-island" type="application/json">{{ weekly_expenses_data | tojson | safe }}</script>
+<script id="category-data-island" type="application/json">{{ expense_by_category | tojson | safe }}</script>
+
+<script>
+// Charting Logic
+document.addEventListener('DOMContentLoaded', function() {
+    const weeklyData = JSON.parse(document.getElementById('weekly-data-island').textContent || '{}');
+    const categoryData = JSON.parse(document.getElementById('category-data-island').textContent || '{}');
+    const chartColors = ['#FFC107', '#4CAF50', '#2196F3', '#9C27B0', '#FF9800', '#F44336'];
+
+    // Weekly Bar Chart
+    new Chart(document.getElementById('weeklyExpenseChart'), {
+        type: 'bar',
+        data: {
+            labels: Object.keys(weeklyData),
+            datasets: [{ data: Object.values(weeklyData), backgroundColor: '#FFC107' }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    // Category Pie Chart
+    new Chart(document.getElementById('categoryPieChart'), {
+        type: 'pie',
+        data: {
+            labels: Object.keys(categoryData),
+            datasets: [{ data: Object.values(categoryData), backgroundColor: chartColors }]
+        },
+        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } }
+    });
+});
+</script>
+{% endblock %}

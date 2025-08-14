@@ -1,0 +1,55 @@
+{% extends "layout.html" %}
+{% block title %}All Expenses{% endblock %}
+{% block content %}
+<div class="content-card">
+
+    <!-- THIS IS THE CORRECTED LINE: 'flex-wrap' instead of 'flex-wrapOf' -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; margin-bottom: 2rem; padding-bottom: 1.5rem; border-bottom: 1px solid #eee;">
+        <div>
+            <h2 style="margin: 0; text-align: left;">All Expenses</h2>
+            <p style="margin: 0; text-align: left;">A complete history of your transactions.</p>
+        </div>
+        
+        <!-- Action Buttons Container -->
+        <div style="display: flex; gap: 1rem;">
+            <a href="{{ url_for('reports') }}" class="btn btn-secondary">📊 Generate Reports</a>
+            <a href="{{ url_for('expense') }}" class="btn btn-primary">Add New Expense</a>
+        </div>
+    </div>
+
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Title</th>
+                    <th>Category</th>
+                    <th>Date</th>
+                    <th>Payment Method</th>
+                    <th style="text-align: right;">Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if expenses %}
+                    {% for expense in expenses %}
+                    <tr>
+                        <td>{{ expense.title }}</td>
+                        <td>{{ expense.category }}</td>
+                        <td>{{ expense.expense_date.strftime('%b %d, %Y') }}</td>
+                        <td>{{ expense.payment_method }}</td>
+                        <td style="text-align: right; font-weight: 600; color: #1c1818;">
+                            {{ user.currency }}   {{ "%.2f"|format(expense.amount) }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem;">
+                            You have no expenses logged yet.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

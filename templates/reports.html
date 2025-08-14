@@ -1,0 +1,125 @@
+{% extends "layout.html" %}
+{% block title %}Financial Reports{% endblock %}
+{% block content %}
+
+<!-- The PDF export libraries are no longer needed, but it's safe to leave them for now -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.23/jspdf.autotable.min.js"></script>
+
+<div class="reports-container">
+    <!-- Sidebar -->
+    <aside class="reports-sidebar">
+        <a href="{{ url_for('dashboard') }}" class="logo" style="margin-bottom: 2rem;">📊</a>
+        <nav>
+            <a href="{{ url_for('dashboard') }}" class="sidebar-link"><span>🏠</span> Dashboard</a>
+            <a href="{{ url_for('reports') }}" class="sidebar-link active"><span>📈</span> Analytics</a>
+            <a href="{{ url_for('investments') }}" class="sidebar-link"><span>💰</span> Investments</a>
+            <a href="{{ url_for('chatbot_page') }}" class="sidebar-link"><span>🤖</span> Chatbot</a>
+        </nav>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="reports-main-content">
+        <!-- Report Header -->
+        <div class="report-page-header">
+            <div>
+                <p class="breadcrumb">Analytics → Financial Overview</p>
+                <h1>Financial Performance</h1>
+            </div>
+            <div class="header-actions">
+                <!-- PDF BUTTON REMOVED FROM HERE -->
+                <button id="exportCsvBtn" class="btn btn-secondary">Download CSV</button>
+                <a href="{{ url_for('expense') }}" class="btn btn-primary">Add Expense</a>
+            </div>
+        </div>
+
+        <!-- Widgets Grid (HTML remains the same) -->
+        <div class="report-widget-grid">
+            <div class="widget-card">
+                <h3 class="widget-title">Income by Source</h3>
+                <div class="chart-container"><canvas id="incomePieChart"></canvas></div>
+            </div>
+            <div class="widget-card">
+                <h3 class="widget-title">Monthly Expenses</h3>
+                <div class="chart-container"><canvas id="expenseBarChart"></canvas></div>
+            </div>
+            <div class="widget-card">
+                <h3 class="widget-title">Investment Portfolio</h3>
+                <div class="chart-container"><canvas id="investmentChart"></canvas></div>
+            </div>
+            <div class="widget-card">
+                <h3 class="widget-title">Assets vs. Liabilities</h3>
+                <div class="chart-container"><canvas id="assetLiabilityChart"></canvas></div>
+            </div>
+            <div class="widget-card full-width">
+                <h3 class="widget-title">Budget vs. Actual Spending (This Month)</h3>
+                <div class="chart-container"><canvas id="budgetBarChart"></canvas></div>
+            </div>
+            <div class="widget-card full-width">
+                <h3 class="widget-title">Income vs. Expense Trend</h3>
+                <div class="chart-container"><canvas id="summaryLineChart"></canvas></div>
+            </div>
+        </div>
+    </main>
+</div>
+
+<!-- Data Island & Charting Script -->
+<script id="report-data-island" type="application/json"></script>
+<script>
+document.addEventListener('DOMContentLoaded', async function() {
+    let reportData = {};
+
+    try {
+        const response = await fetch('/api/comprehensive-report');
+        reportData = await response.json();
+        document.getElementById('report-data-island').textContent = JSON.stringify(reportData, null, 2);
+    } catch (e) {
+        console.error("Failed to load report data:", e);
+        return;
+    }
+    
+    // Chart rendering logic remains the same...
+    const chartColors = ['#FFC107', '#4CAF50', '#2196F3', '#9C27B0', '#FF9800', '#F44336'];
+    new Chart(document.getElementById('incomePieChart'), { type: 'pie', data: { labels: Object.keys(reportData.income_by_source), datasets: [{ data: Object.values(reportData.income_by_source), backgroundColor: chartColors }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+    new Chart(document.getElementById('expenseBarChart'), { type: 'bar', data: { labels: Object.keys(reportData.expenses_by_month), datasets: [{ label: 'Total Spent', data: Object.values(reportData.expenses_by_month), backgroundColor: '#FFC107' }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } } });
+    new Chart(document.getElementById('investmentChart'), { type: 'doughnut', data: { labels: Object.keys(reportData.investments_by_type), datasets: [{ data: Object.values(reportData.investments_by_type), backgroundColor: chartColors }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom' } } } });
+    const avlData = reportData.assets_vs_liabilities;
+    new Chart(document.getElementById('assetLiabilityChart'), { type: 'bar', data: { labels: ['Assets', 'Liabilities'], datasets: [{ label: 'Value', data: [avlData.assets, avlData.liabilities], backgroundColor: ['#10B981', '#EF4444'] }] }, options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } } } });
+    new Chart(document.getElementById('budgetBarChart'), { type: 'bar', data: { labels: reportData.budget_vs_actual.labels, datasets: [ { label: 'Budgeted', data: reportData.budget_vs_actual.budgeted, backgroundColor: 'rgba(59, 130, 246, 0.5)' }, { label: 'Spent', data: reportData.budget_vs_actual.actual, backgroundColor: 'rgba(255, 193, 7, 0.8)' } ] }, options: { responsive: true, maintainAspectRatio: false, scales: { x: { stacked: false }, y: { stacked: false, beginAtZero: true } } } });
+    new Chart(document.getElementById('summaryLineChart'), { type: 'line', data: { labels: reportData.summary_line_graph.labels, datasets: [ { label: 'Income', data: reportData.summary_line_graph.income, borderColor: '#10B981', tension: 0.1 }, { label: 'Expenses', data: reportData.summary_line_graph.expenses, borderColor: '#EF4444', tension: 0.1 } ] }, options: { responsive: true, maintainAspectRatio: false } });
+
+    
+    // --- EXPORT HANDLERS (PDF LOGIC REMOVED) ---
+    
+    // --- CSV Export (Fully Functional) ---
+    document.getElementById('exportCsvBtn').addEventListener('click', () => {
+        if (!reportData.income_by_source) return alert('Please wait for the report to load.');
+        
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Report Section,Label,Value\n";
+
+        const escapeCsvCell = (cell) => `"${(cell || '').toString().replace(/"/g, '""')}"`;
+
+        Object.entries(reportData.income_by_source).forEach(([key, val]) => {
+            csvContent += `Income by Source,${escapeCsvCell(key)},${val}\n`;
+        });
+        Object.entries(reportData.expenses_by_month).forEach(([key, val]) => {
+            csvContent += `Monthly Expenses,${escapeCsvCell(key)},${val}\n`;
+        });
+        Object.entries(reportData.investments_by_type).forEach(([key, val]) => {
+            csvContent += `Investment Portfolio,${escapeCsvCell(key)},${val}\n`;
+        });
+        csvContent += `Assets vs. Liabilities,Assets,${reportData.assets_vs_liabilities.assets}\n`;
+        csvContent += `Assets vs. Liabilities,Liabilities,${reportData.assets_vs_liabilities.liabilities}\n`;
+        
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "financial_report.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    });
+});
+</script>
+{% endblock %}

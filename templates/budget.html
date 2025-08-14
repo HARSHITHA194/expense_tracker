@@ -1,0 +1,44 @@
+{% extends "layout.html" %}
+{% block title %}Set Your Budgets{% endblock %}
+{% block content %}
+<div class="content-card">
+
+    <h2>Set Your Budgets</h2>
+    <p>Plan your monthly spending to achieve your financial goals.</p>
+
+    <form action="{{ url_for('budget') }}" method="post" style="margin-top: 2rem;">
+        
+        <!-- Total Monthly Budget Section -->
+        <div class="form-group">
+            <label for="total_monthly_budget">Total Monthly Budget</label>
+            <input type="number" step="0.01" id="total_monthly_budget" name="total_monthly_budget" placeholder="e.g., 30000" required>
+            <small id="budget-warning" style="color: #EF4444; display: none; margin-top: 0.5rem;">Warning: Your total budget exceeds your total monthly income.</small>
+        </div>
+
+        <!-- Category Budgets Section -->
+        <h3 style="text-align: left; margin-top: 2.5rem; border-top: 1px solid #eee; padding-top: 2rem;">Category-Specific Budgets</h3>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            {% set categories = ["Groceries", "Transportation", "Entertainment", "Dining Out", "Utilities", "Shopping", "Travel", "Healthcare", "Personal Care", "Education", "Gifts", "Other"] %}
+            {% for category in categories %}
+            <div class="form-group">
+                <label for="category_{{ category.lower().replace(' ', '_') }}">{{ category }}</label>
+                <input type="number" step="0.01" class="category-budget-input" id="category_{{ category.lower().replace(' ', '_') }}" name="category_{{ category.lower().replace(' ', '_') }}" placeholder="Budget amount">
+            </div>
+            {% endfor %}
+        </div>
+        <small id="category-warning" style="color: #EF4444; display: none; margin-top: 0.5rem;">Warning: The sum of category budgets exceeds your total monthly budget.</small>
+
+        <!-- Form Actions -->
+        <div style="text-align: right; margin-top: 2.5rem; border-top: 1px solid #eee; padding-top: 1.5rem;">
+            <button type="submit" name="save" class="btn btn-primary">Save Budgets & Finish</button>
+        </div>
+    </form>
+</div>
+
+<!-- Optional: Client-side validation logic can be added here -->
+<script>
+    // Simple script to show warnings can be implemented here if needed.
+    // For example, on input change, calculate totals and show/hide the small tags.
+</script>
+{% endblock %}

@@ -1,0 +1,107 @@
+{% extends "layout.html" %}
+{% block title %}Investments{% endblock %}
+{% block content %}
+
+<div class="content-card">
+
+    <h2>Manage Your Investments</h2>
+    <p>Keep a record of your investment portfolio.</p>
+
+    <!-- Add Investment Form -->
+    <form action="{{ url_for('investments') }}" method="post" style="margin-top: 2rem; border-bottom: 1px solid #eee; padding-bottom: 2rem; margin-bottom: 2rem;">
+        <input type="hidden" name="action" value="add">
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; align-items: end;">
+            <div class="form-group" style="margin-bottom: 0;">
+                <label for="investment_name">Investment Name</label>
+                <input type="text" id="investment_name" name="investment_name" placeholder="e.g., Vanguard S&P 500" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label for="amount_invested">Amount Invested</label>
+                <input type="number" step="0.01" id="amount_invested" name="amount_invested" placeholder="e.g., 1000" required>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label for="investment_type">Investment Type</label>
+                <select id="investment_type" name="investment_type" required>
+                    <option value="Stocks">Stocks</option>
+                    <option value="Bonds">Bonds</option>
+                    <option value="Mutual Funds">Mutual Funds</option>
+                    <option value="Real Estate">Real Estate</option>
+                    <option value="Crypto">Crypto</option>
+                    <option value="Bank">Bank</option>
+
+                </select>
+            </div>
+            <div class="form-group" style="margin-bottom: 0;">
+                <label for="investment_date">Date</label>
+                <input type="date" id="investment_date" name="investment_date" required>
+            </div>
+             <div class="form-group" style="margin-bottom: 0;">
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Add Investment</button>
+            </div>
+        </div>
+    </form>
+
+    <!-- Saved Investments Table -->
+    <h3 style="text-align: left;">Your Portfolio</h3>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>Type</th>
+                    <th>Date</th>
+                    <th style="text-align: right;">Amount Invested</th>
+                    <th style="text-align: center;">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% if investments %}
+                    {% for inv in investments %}
+                    <tr>
+                        <td>{{ inv.investment_name }}</td>
+                        <td>{{ inv.investment_type }}</td>
+                        <td>{{ inv.investment_date.strftime('%b %d, %Y') }}</td>
+                        <td style="text-align: right;">{{ current_user.currency or '₹' }} {{ "%.2f"|format(inv.amount_invested) }}</td>
+                        <td style="text-align: center;">
+                            <form action="{{ url_for('investments') }}" method="post" style="display:inline;">
+                                 <input type="hidden" name="action" value="delete">
+                                 <input type="hidden" name="investment_id" value="{{ inv.id }}">
+                                 <!-- THE FIX IS HERE -->
+                                 <button type="submit" class="btn btn-danger-small">Delete</button>
+                                 <!-- END OF FIX -->
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="5" style="text-align: center; padding: 2rem;">
+                            No investments have been added yet.
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<style>
+    /* Add this style block specifically for this page */
+    .btn-danger-small {
+        background-color: #fee2e2;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+        padding: 0.3rem 0.8rem;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    .btn-danger-small:hover {
+        background-color: #fecaca;
+        color: #991b1b;
+    }
+</style>
+{% endblock %}
